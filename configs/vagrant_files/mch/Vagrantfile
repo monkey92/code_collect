@@ -1,0 +1,69 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+scriptPath = File.expand_path("./.vagrant/scripts")
+
+
+Vagrant.configure("2") do |config|
+
+  ################  vm  ################
+  config.vm.box = "mch"
+  config.vm.box_check_update = false
+
+
+  ################  ssh  ################
+  config.ssh.insert_key = false
+  # config.ssh.username = 'vagrant'
+  # config.ssh.password = 'vagrant'
+  config.ssh.private_key_path = "~/.ssh/id_rsa"
+  config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
+  config.ssh.forward_agent = true
+
+
+  ################  network  ################
+  config.vm.network "public_network",ip:"192.168.0.192"
+
+
+
+  ################  synced_folder  ################
+  config.vm.synced_folder ".", "/vagrant",disabled: true
+  config.vm.synced_folder ".", "/home/vagrant/mch"
+
+
+  ################  provisions  ################
+  # copy public_key to guest
+  config.vm.provision "shell" do |s|
+          s.inline = "echo $1 | grep -xq \"$1\" /home/vagrant/.ssh/authorized_keys || echo \"\n$1\" | tee -a /home/vagrant/.ssh/authorized_keys"
+          s.args = [File.read(File.expand_path("~/.ssh/id_rsa.pub"))]
+  end
+
+  # clear nginx conf_files except default.conf
+  config.vm.provision "shell" do |s|
+      s.name = "Clear Nginx Conf"
+      s.path = scriptPath + "/clear_nginx_conf.sh"
+  end
+  # create nginx site_conf
+  config.vm.provision "shell" do |s|
+      s.name = "Create Site Conf"
+      s.path = scriptPath + "/create_site_conf.sh"
+      s.args = ["www.mch.com","/home/vagrant/mch","80","443"]
+  end
+
+  # start nginx service
+  config.vm.provision "shell" do |s|
+      s.name = "Start Nginx"
+      s.inline = "sudo systemctl start nginx"
+  end
+
+
+  ################  provider  ################
+  config.vm.provider "virtualbox" do |vb|
+    vb.name =  "centos7_nginx_php54"
+    vb.customize ["modifyvm", :id, "--memory", "1024"]
+    vb.customize ["modifyvm", :id, "--cpus", "1"]
+    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+  end
+
+
+end

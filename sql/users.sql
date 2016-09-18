@@ -1,7 +1,8 @@
 create table `users` (
 	`id` int unsigned not null auto_increment,
 	`name` varchar(64),
-	`nick_name` varchar(64),
+	`nickname` varchar(64),
+	`sex` int,
 	`email` varchar(64),
 	`password` varchar(255),
 	`weixin_id` varchar(64),

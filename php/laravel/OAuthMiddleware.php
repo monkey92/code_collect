@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\WxUser;
 use Closure;
 use Monkey92\HttpUtil;
 
@@ -28,21 +29,34 @@ class OAuthMiddleware
             return "需要在微信浏览器打开此链接";
         }
 
+        //检查session里是否有openid
+        if(!empty(session('openid'))){
+            return $next($request);
+        }
+        $openid_from = '';
+        $openid = '';
         if($request->has('code')){
             $openid = $this->getOpenIdFromCode($request->input('code'));
-            session(["openid"=>$openid]);
-            //把openid放到cookie里面
-            app('cookie')->queue('openid',$openid,7*24*60);
+            $openid_from = 'code';
         }else if($request->hasCookie('openid')){
-            session(["openid"=>$request->cookie('openid')]);
+            $openid = $request->cookie('openid');
+            $openid_from = 'cookie';
         }else{
             return $this->redirect2getcode($request->fullUrl());
         }
-
+        //验证openid
+        $wx_user = WxUser::where(['openid'=>$openid])->first();
+        if($wx_user == null){
+            return "非法的openid,这可能是你还没有关注此公众号,或者服务器未同步";
+        }
+        //把openid放到session里面
+        session(["openid"=>$openid,"openid_from"=>$openid_from]);
+        //把openid放到cookie里面
+//        app('cookie')->queue('openid',$openid,7*24*60);
+        app('cookie')->queue('openid',$openid,60);
+        //向下请求
         return $next($request);
     }
-
-
 
     private function redirect2getcode($redirect_uri){
         $appid = config('wxconf.appid');

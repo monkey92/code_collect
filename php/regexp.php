@@ -33,15 +33,35 @@
 
 
     function removeHtmlTag($html){
-    	return preg_replace('#(<img(.*?)>|<[^>.*]*>)#', '', $html);
+        return preg_replace('#(<img(.*?)>|<[^>.*]*>)#', '', $html);
     }
 
     function findImg($html){
         $pattern = '#<\s*img\s*[^>]*src=[\'\"]([^\s\'\"]+)[\'\"][^>]*/?>#i';
         $matches = [];
-    	preg_match_all($pattern,'', $matches);
+        preg_match_all($pattern,'', $matches);
 
         return $matches;
+    }
+
+
+    //找到以固定字符串开头的图片链接并且替换掉
+    function findImgAndReplace($subject){
+
+        $pattern = '#<\s*img\s*[^>]*src=[\'\"]([^\s\'\"]+)[\'\"][^>]*/?>#i';
+
+        preg_replace_callback($pattern, function($matches) use (&$subject){
+            
+            $pic_domain = 'http://pic-domain.com';
+
+            $img_url = $matches[1];
+
+            if(substr($img_url, 0,strlen($pic_domain)) == $pic_domain){
+                $subject = str_replace($img_url, substr($img_url, strlen($pic_domain)), $subject);
+            }
+        }, $subject);
+
+
     }
 
 

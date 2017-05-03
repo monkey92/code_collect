@@ -30,3 +30,22 @@
         if(in_array($name,$not_allow_names) || !preg_match('/^[a-zA-Z0-9_\x{4e00}-\x{9fa5}]{2,18}$/u',$name)) return false;
         return true;
     }
+
+
+    function removeHtmlTag($html){
+    	return preg_replace('#(<img(.*?)>|<[^>.*]*>)#', '', $html);
+    }
+
+    function findImg($html){
+        $pattern = '#<\s*img\s*[^>]*src=[\'\"]([^\s\'\"]+)[\'\"][^>]*/?>#i';
+        $matches = [];
+    	preg_match_all($pattern,'', $matches);
+
+        return $matches;
+    }
+
+
+
+    
+
+

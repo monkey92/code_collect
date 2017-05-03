@@ -14,3 +14,5 @@ function validate_id_card(){
 	 }
 	 return true;
 }
+
+
